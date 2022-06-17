@@ -1,3 +1,6 @@
+//FlaminGO Discord bot
+//Author: Caleb Munn
+
 package main
 
 func main() {

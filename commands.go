@@ -33,7 +33,7 @@ func DisplayHelp() *discordgo.MessageEmbed { //Returns a DiscordGo embed message
 			//!get
 			{
 				Name:   "!get",
-				Value:  "Returns a list of birds seen within 10km of RIT",
+				Value:  "Returns a list of birds seen within 10km of RIT in the past 2 weeks",
 				Inline: false,
 			},
 		},
@@ -78,7 +78,9 @@ func GetRecentObs(loc Location, radius int) string { //Gets a list of nearby obs
 	//Formatting return string
 	rString := fmt.Sprintf("Number of birds seen within %d km of %v:\n", radius, loc.name)
 	for i := 0; i < len(b); i++ {
-		rString += fmt.Sprintf("%v: %d\n", b[i].ComName, b[i].HowMany)
+		if b[i].HowMany > 0 {
+			rString += fmt.Sprintf("%v: %d\n", b[i].ComName, b[i].HowMany)
+		}
 	}
 
 	return rString

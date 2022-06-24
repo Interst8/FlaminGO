@@ -48,6 +48,12 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == BotID {
 		return
 	}
+
+	//Calls DisplayHelp() to display a list of commands and their usage
+	if m.Content == "!flamingo" {
+		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, DisplayHelp())
+	}
+
 	//Calls GetRecentObs and returns a list of birds and how many were seen.
 	if m.Content == "!get" {
 		_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObs(RIT, KM))

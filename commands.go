@@ -7,11 +7,39 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	// "time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
+//Definition of structures used in commands
 type Bird struct {
 	ComName string
 	HowMany int
+}
+
+func DisplayHelp() *discordgo.MessageEmbed { //Returns a DiscordGo embed message listing FlaminGO's commands and usage
+	//from: https://github.com/bwmarrin/discordgo/wiki/FAQ#sending-embeds
+	return &discordgo.MessageEmbed{
+		Color: 16711833,
+		Fields: []*discordgo.MessageEmbedField{
+			//!flamingo
+			{
+				Name:   "!flamingo",
+				Value:  "Displays this list of commands",
+				Inline: false,
+			},
+			//!get
+			{
+				Name:   "!get",
+				Value:  "Returns a list of birds seen within 10km of RIT",
+				Inline: false,
+			},
+		},
+		// Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+		Title: "FlaminGO Command Help",
+	}
 }
 
 func GetRecentObs(loc Location, radius int) string { //Gets a list of nearby observations in the specified radius (km) from a location

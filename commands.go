@@ -76,7 +76,7 @@ func GetRecentObs(loc Location, radius int) string { //Gets a list of nearby obs
 	}
 
 	//Formatting return string
-	rString := fmt.Sprintf("Number of birds seen within %d km of %v:\n", radius, loc.name)
+	rString := fmt.Sprintf("**Number of birds seen within %d km of %v in the past 2 weeks:**\n", radius, loc.name)
 	for i := 0; i < len(b); i++ {
 		if b[i].HowMany > 0 {
 			rString += fmt.Sprintf("%v: %d\n", b[i].ComName, b[i].HowMany)

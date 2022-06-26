@@ -13,11 +13,11 @@ var (
 	Token string
 	Key   string
 
-	LCode = "L976278" //EBird Location code for Rochester Institute of Technology. Hardcoded for RIT Birding club, I plan to make this overridable by command
-	KM    = 10        //Default size to search around location, 5 kilometers.
-	Lat   = 43.08     //Latitude of RIT
-	Long  = -77.67    //Longitude of RIT
-	RIT   Location
+	KM int //Radius in km around a location to search for birds
+
+	RIT      Location
+	Braddock Location
+	Mendon   Location
 )
 
 type Location struct {
@@ -35,15 +35,29 @@ func init() {
 		return
 	}
 
-	//Get bot token
+	//Get bot Discord token
 	Token = os.Getenv("FLAMINGO_TOK")
 	//Get Ebird API Key
 	Key = os.Getenv("EBIRD_KEY")
 
+	KM = 5
+
 	//Create RIT Location
-	RIT.code = LCode
-	RIT.lat = Lat
-	RIT.long = Long
+	RIT.code = "L976278" //eBird location code
+	RIT.lat = 43.08
+	RIT.long = -77.67
 	RIT.name = "Rochester Institute of Technology"
+
+	//Create Braddock Bay Location
+	Braddock.code = "L772198"
+	Braddock.lat = 43.30
+	Braddock.long = -77.71
+	Braddock.name = "Braddock Bay Park"
+
+	//Create Mendon Ponds Location
+	Mendon.code = "L139800"
+	Mendon.lat = 43.02
+	Mendon.long = -77.57
+	Mendon.name = "Mendon Ponds Park"
 
 }

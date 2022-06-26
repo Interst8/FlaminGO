@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 
 	// "time"
 
@@ -32,8 +33,8 @@ func DisplayHelp() *discordgo.MessageEmbed { //Returns a DiscordGo embed message
 			},
 			//!get
 			{
-				Name:   "!get",
-				Value:  "Returns a list of birds seen within 10km of RIT in the past 2 weeks",
+				Name:   "!get (RIT/Mendon/Braddock)",
+				Value:  "Returns a list of birds seen within 5km of the specified location in the past 2 weeks",
 				Inline: false,
 			},
 		},
@@ -75,8 +76,13 @@ func GetRecentObs(loc Location, radius int) string { //Gets a list of nearby obs
 		return err.Error()
 	}
 
+	//Sorting list of birds alphabetically
+	sort.Slice(b, func(i, j int) bool {
+		return b[i].ComName < b[j].ComName
+	})
+
 	//Formatting return string
-	rString := fmt.Sprintf("**Number of birds seen within %d km of %v in the past 2 weeks:**\n", radius, loc.name)
+	rString := fmt.Sprintf("**Verified eBird sightings within %d km of %v in the past 2 weeks:**\n", radius, loc.name)
 	for i := 0; i < len(b); i++ {
 		if b[i].HowMany > 0 {
 			rString += fmt.Sprintf("%v: %d\n", b[i].ComName, b[i].HowMany)

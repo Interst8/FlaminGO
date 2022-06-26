@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -49,13 +50,25 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	m.Content = strings.ToLower(m.Content) //Lowercasing message content to standardize commands
+
 	//Calls DisplayHelp() to display a list of commands and their usage
 	if m.Content == "!flamingo" {
 		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, DisplayHelp())
 	}
 
-	//Calls GetRecentObs and returns a list of birds and how many were seen.
-	if m.Content == "!get" {
+	//Calls GetRecentObs and returns a list of birds nearby and how many were seen.
+	//Separate commands for locations relevant to the RIT Birding Club
+	if m.Content == "!get rit" {
 		_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObs(RIT, KM))
 	}
+
+	if m.Content == "!get braddock" || m.Content == "!get braddock bay" || m.Content == "!get braddock bay park" {
+		_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObs(Braddock, KM))
+	}
+
+	if m.Content == "!get mendon" || m.Content == "!get mendon ponds" || m.Content == "!get mendon ponds park" {
+		_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObs(Mendon, KM))
+	}
+
 }

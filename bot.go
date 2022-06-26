@@ -57,7 +57,7 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, DisplayHelp())
 	}
 
-	//Calls GetRecentObs and returns a list of birds nearby and how many were seen.
+	//Calls GetRecentObs and returns a list of birds nearby and how many were seen
 	//Separate commands for locations relevant to the RIT Birding Club
 	if m.Content == "!get rit" {
 		_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObs(RIT, KM))
@@ -69,6 +69,11 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "!get mendon" || m.Content == "!get mendon ponds" || m.Content == "!get mendon ponds park" {
 		_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObs(Mendon, KM))
+	}
+
+	//Calls GetRareOns and returns a list of notable bird sightings within 15km of RIT, along with their location and date of observation
+	if m.Content == "!rare" {
+		_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObs(RIT, 15))
 	}
 
 }

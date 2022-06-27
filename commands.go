@@ -292,7 +292,7 @@ func DisplayBird(formatted_name string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
 			Color:       16711833,
 			Title:       "Bird not found!",
-			Description: "Make sure you spelled it right and have the name properly punctuated. Also make sure you have the full name (e.g. \"American Robin\" instead of just \"Robin\".",
+			Description: "Make sure you spelled it right and have the name properly punctuated. Also make sure you have the full name (e.g. \"American Robin\" instead of just \"Robin\").",
 		}
 	} else {
 		//from: https://github.com/bwmarrin/discordgo/wiki/FAQ#sending-embeds

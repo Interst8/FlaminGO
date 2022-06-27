@@ -1,4 +1,4 @@
-//FlaminGO Discord bot
+//FlaminGo Discord bot
 //Author: Caleb Munn
 
 package main
@@ -6,4 +6,5 @@ package main
 func main() {
 	Start()
 	<-make(chan struct{})
+
 }

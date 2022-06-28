@@ -1,1 +1,1 @@
-app: bin/FlaminGo
+worker: bin/FlaminGo

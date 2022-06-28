@@ -3,10 +3,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -29,11 +26,13 @@ type Location struct {
 
 func init() {
 	// load .env file
-	err := godotenv.Load("config.env")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
+
+	//Turned off for Heroku deployment
+	// err := godotenv.Load("config.env")
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return
+	// }
 
 	//Get bot Discord token
 	Token = os.Getenv("FLAMINGO_TOK")

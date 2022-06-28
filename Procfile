@@ -1,1 +1,1 @@
-web: bin/FlaminGo
+app: bin/FlaminGo

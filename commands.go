@@ -1,4 +1,4 @@
-//This file defines the functions used in the messageHandler in bot.go
+// Commands defines the commands available in FlaminGo
 
 package main
 
@@ -15,15 +15,18 @@ import (
 	"github.com/gocolly/colly"
 )
 
-//Definition of structures used in commands
-type Bird struct {
+// Defining some structures used by FlaminGo commands
+
+// BirdSighting holds information related to a specific bird sighting in GetRecentObservations and GetRareObservations commands.
+type BirdSighting struct {
 	ComName string
 	HowMany int
 	LocName string
 	ObsDt   string
 }
 
-type EmbedInfo struct { //Variables for a bird information embed
+// EmbedInfo holds information retrieved from AllAboutBirds for a bird info embed, for use in the DisplayBird() command
+type EmbedInfo struct {
 	Name           string
 	ScientificName string
 	Order          string
@@ -38,30 +41,33 @@ type EmbedInfo struct { //Variables for a bird information embed
 	ImageURL       string
 }
 
-func DisplayHelp() *discordgo.MessageEmbed { //Returns a DiscordGo embed message listing FlaminGo's commands and usage
+// Defining Commands
+
+// DisplayHelp() returns a DiscordGo embed message listing FlaminGo's commands and usage
+func DisplayHelp() *discordgo.MessageEmbed {
 	//from: https://github.com/bwmarrin/discordgo/wiki/FAQ#sending-embeds
 	return &discordgo.MessageEmbed{
-		Color: 16711833,
+		Color: 16711833, // Pink
 		Fields: []*discordgo.MessageEmbedField{
-			//!flamingo
+			// !flamingo
 			{
 				Name:   "!flamingo",
 				Value:  "Displays this list of commands",
 				Inline: false,
 			},
-			//!get
+			// !get
 			{
 				Name:   "!get (RIT/Mendon/Braddock)",
 				Value:  "Returns a list of birds seen within 5km of the specified location in the past 2 weeks",
 				Inline: false,
 			},
-			//!rare
+			// !rare
 			{
-				Name:   "!rare",
-				Value:  "Returns a list of notable bird sightings (rare, out of season, etc.) within 15km of RIT",
+				Name:   "!rare (RIT/Mendon/Braddock)",
+				Value:  "Returns a list of notable bird sightings (rare, out of season, etc.) within 15km of the specified location",
 				Inline: false,
 			},
-			//!bird
+			// !bird
 			{
 				Name:   "!bird (Full Bird Name)",
 				Value:  "Displays info for the specified bird. Uses information and names from AllAboutBirds.org.",
@@ -72,45 +78,56 @@ func DisplayHelp() *discordgo.MessageEmbed { //Returns a DiscordGo embed message
 	}
 }
 
-func GetRecentObs(loc Location, radius int) string { //Gets a list of nearby observations in the specified radius (km) from a location
+// GetRecentObservations returns a list of nearby observations in the specified radius (km) from the specified location.
+func GetRecentObservations(loc Location, radius int) string {
+	// Creating URL
 	url := fmt.Sprintf("https://api.ebird.org/v2/data/obs/geo/recent?lat=%v&lng=%v&sort=species&dist=%d", loc.lat, loc.long, radius)
 	method := "GET"
 
+	//Creating HTTP request
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, nil)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 
+	// Adding API token to header
 	req.Header.Add("X-eBirdApiToken", Key)
 
+	// Sends the request
 	res, err := client.Do(req)
+	//Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body) //body is a JSON response
+	// Body is a JSON response
+	body, err := ioutil.ReadAll(res.Body)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 
-	var b []Bird
+	// Creates an array of BirdSighting and Unmarshals the contents of body into this array
+	var b []BirdSighting
 	err = json.Unmarshal(body, &b)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 
-	//Sorting list of birds alphabetically
+	// Sorting list of birds alphabetically
 	sort.Slice(b, func(i, j int) bool {
 		return b[i].ComName < b[j].ComName
 	})
 
-	//Formatting return string
+	// Formatting return string
 	rString := fmt.Sprintf("**Verified eBird sightings within %d km of %v in the past 2 weeks:**\n", radius, loc.name)
 	for i := 0; i < len(b); i++ {
 		if b[i].HowMany > 0 {
@@ -121,45 +138,57 @@ func GetRecentObs(loc Location, radius int) string { //Gets a list of nearby obs
 	return rString
 }
 
-func GetRareObs(loc Location, radius int) string { //Gets a list of nearby notable bird sightings
+// GetRareObservations returns a list of nearby notable observations in the specified radius (km) from the specified location.
+// A notable observation may be a rare bird or a bird out of season.
+func GetRareObservations(loc Location, radius int) string {
+	// Creating URL
 	url := fmt.Sprintf("https://api.ebird.org/v2/data/obs/geo/recent/notable?lat=%v&lng=%v&dist=%d&sort=species&hotspot=true", loc.lat, loc.long, radius)
 	method := "GET"
 
+	//Creating HTTP request
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, nil)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 
+	// Adding API token to header
 	req.Header.Add("X-eBirdApiToken", Key)
 
+	// Sends the request
 	res, err := client.Do(req)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body) //body is a JSON response
+	// Body is a JSON response
+	body, err := ioutil.ReadAll(res.Body)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 
-	var b []Bird
+	// Creates an array of BirdSighting and Unmarshals the contents of body into this array
+	var b []BirdSighting
 	err = json.Unmarshal(body, &b)
+	// Error handling
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
 
-	//Sorting list of birds alphabetically
+	// Sorting list of birds alphabetically
 	sort.Slice(b, func(i, j int) bool {
 		return b[i].ComName < b[j].ComName
 	})
 
-	//Formatting return string
+	// Formatting return string
 	rString := ""
 	if len(b) == 0 {
 		rString = "**No notable eBird sightings found.**"
@@ -176,29 +205,32 @@ func GetRareObs(loc Location, radius int) string { //Gets a list of nearby notab
 	return rString
 }
 
-func scrapeEmbedInfo(formatted_name string) EmbedInfo { //Returns a message embed containing information about the bird pulled from AllAboutBirds.org
+// scrapeEmbedInfo attempts to gather information about a bird from AllAboutBirds.org.
+// formattedName is a string created by messageHandler() that is given to DisplayBird() to be added to the end of the URL
+func scrapeEmbedInfo(formattedName string) EmbedInfo {
 
 	var embed EmbedInfo
 
-	//Resolving URL
-	embed.URL = fmt.Sprintf("https://www.allaboutbirds.org/guide/%s", formatted_name)
+	// Resolving URL
+	embed.URL = fmt.Sprintf("https://www.allaboutbirds.org/guide/%s", formattedName)
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.allaboutbirds.org"),
 	)
 
-	//Since putting in a nonexistent bird returns a search page and doesn't give an error, this acts as a form of
-	//error checking by identifying an element unique to the search page.
+	// Since putting in a nonexistent bird returns a search page and doesn't give an error, this acts as a form of
+	// error checking by identifying an element unique to the AllAboutBirds search page.
 	c.OnHTML("h1[class='page-title']", func(e *colly.HTMLElement) {
 		embed.Name = "Bird not found!"
 	})
 
-	//Getting information from Species Info box
+	// Getting information from Species Info box
 	c.OnHTML(".callout[aria-label='Species Info']", func(e *colly.HTMLElement) {
-		embed.Name = e.ChildText(".species-name") //Species Name
-		embed.ScientificName = e.ChildText("em")  //Scientific Name
+		embed.Name = e.ChildText(".species-name") // Species Name
+		embed.ScientificName = e.ChildText("em")  // Scientific Name
 
-		e.ForEach("li", func(_ int, ch *colly.HTMLElement) { //Grabbing order and family information
+		// Grabbing order and family information
+		e.ForEach("li", func(_ int, ch *colly.HTMLElement) {
 			strings := strings.Split(ch.Text, " ")
 			switch strings[0] {
 			case "ORDER:":
@@ -208,9 +240,11 @@ func scrapeEmbedInfo(formatted_name string) EmbedInfo { //Returns a message embe
 			}
 		})
 
-		next := "" //A variable that is used in the following ForEach loop to determine which embed fields to fill
+		// next is a variable that is used in the following ForEach loop to determine which embed fields to fill
+		next := ""
 		e.ForEach("span", func(_ int, ch *colly.HTMLElement) {
-			switch next { //Filling in the embed variables based on the status of 'next'
+			// Filling in the embed variables based on the status of 'next'
+			switch next {
 			case "habitat":
 				embed.Habitat = ch.Text
 				next = ""
@@ -225,7 +259,8 @@ func scrapeEmbedInfo(formatted_name string) EmbedInfo { //Returns a message embe
 				next = ""
 			}
 
-			switch ch.Text { //Switch used to set 'next'
+			// Switch used to set 'next'
+			switch ch.Text {
 			case "Habitat":
 				next = "habitat"
 			case "Food":
@@ -238,7 +273,8 @@ func scrapeEmbedInfo(formatted_name string) EmbedInfo { //Returns a message embe
 		})
 	})
 
-	c.OnHTML(".speciesInfoCard", func(e *colly.HTMLElement) { //Getting species description
+	// Getting species description
+	c.OnHTML(".speciesInfoCard", func(e *colly.HTMLElement) {
 		e.ForEach("div", func(_ int, ch *colly.HTMLElement) {
 			if ch.ChildText("h2") == "Basic Description" {
 				embed.Description = ch.ChildText("p")
@@ -246,16 +282,18 @@ func scrapeEmbedInfo(formatted_name string) EmbedInfo { //Returns a message embe
 		})
 	})
 
-	c.OnHTML("li[class='is-active']", func(e *colly.HTMLElement) { //Adding bird facts to slice
+	// Adding bird facts to slice
+	c.OnHTML("li[class='is-active']", func(e *colly.HTMLElement) {
 		e.ForEach("li", func(_ int, ch *colly.HTMLElement) {
 			embed.Facts = append(embed.Facts, ch.Text)
 		})
 	})
 
-	c.OnHTML(".hero-menu", func(e *colly.HTMLElement) { //Getting image URL
+	// Getting image URL
+	c.OnHTML(".hero-menu", func(e *colly.HTMLElement) {
 		e.ForEachWithBreak("img", func(_ int, ch *colly.HTMLElement) bool {
 			if embed.ImageURL == "" {
-				//Janky, but it works until I figure out a solution for Attr("src") not working
+				// Janky, but it works until I figure out a solution for Attr("src") not working
 				interchange := ch.Attr("data-interchange")
 				images := strings.Split(interchange, "[")
 				image := strings.Split(images[3], ",")
@@ -267,35 +305,26 @@ func scrapeEmbedInfo(formatted_name string) EmbedInfo { //Returns a message embe
 		})
 	})
 
+	// Visits the URL, beginning the search for applicable HTML elements.
 	c.Visit(embed.URL)
 
-	// fmt.Println(embed.Name)
-	// fmt.Println(embed.ScientificName)
-	// fmt.Println(embed.Order)
-	// fmt.Println(embed.Family)
-	// fmt.Println(embed.Habitat)
-	// fmt.Println(embed.Food)
-	// fmt.Println(embed.Nesting)
-	// fmt.Println(embed.Behavior)
-	// fmt.Println(embed.Description)
-	// fmt.Println(embed.Facts)
-	// fmt.Println(embed.URL)
-	// fmt.Println(embed.ImageURL)
-	// fmt.Println("Done!")
 	return embed
 }
 
-func DisplayBird(formatted_name string) *discordgo.MessageEmbed {
-	embed := scrapeEmbedInfo(formatted_name)
+// DisplayBird() creates and returns a Discord embed containing information about the bird.
+// formattedName is a URL compatible string that is fed to scrapeEmbedInfo
+func DisplayBird(formattedName string) *discordgo.MessageEmbed {
+	embed := scrapeEmbedInfo(formattedName)
 
+	// If the URL does not return a bird, the bot will return this error embed.
 	if embed.Name == "Bird not found!" {
 		return &discordgo.MessageEmbed{
-			Color:       16711833,
+			Color:       16711833, // Pink
 			Title:       "Bird not found!",
 			Description: "Make sure you spelled it right and have the name properly punctuated. Also make sure you have the full name (e.g. \"American Robin\" instead of just \"Robin\").",
 		}
 	} else {
-		//from: https://github.com/bwmarrin/discordgo/wiki/FAQ#sending-embeds
+		// from: https://github.com/bwmarrin/discordgo/wiki/FAQ#sending-embeds
 		return &discordgo.MessageEmbed{
 			Color:       16711833,
 			Description: embed.ScientificName,

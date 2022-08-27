@@ -74,13 +74,33 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// !get Calls GetRecentObservations() command
 	// Separate options for locations relevant to the RIT Birding Club
 	if messageTokens[0] == "!get" {
+		// Adding a third message token if the user did not input an optional argument, so that the bot does not crash
+		if len(messageTokens) < 3 {
+			messageTokens = append(messageTokens, "")
+		}
+
 		switch messageTokens[1] {
 		case "rit":
-			_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(RIT, KM))
+			switch messageTokens[2] {
+			case "reversed":
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(RIT, KM, true))
+			default:
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(RIT, KM, false))
+			}
 		case "braddock":
-			_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(Braddock, KM))
+			switch messageTokens[2] {
+			case "reversed":
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(Braddock, KM, true))
+			default:
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(Braddock, KM, false))
+			}
 		case "mendon":
-			_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(Mendon, KM))
+			switch messageTokens[2] {
+			case "reversed":
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(Mendon, KM, true))
+			default:
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRecentObservations(Mendon, KM, false))
+			}
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error: '%s' is not a valid option for !get", messageTokens[1]))
 		}
@@ -90,13 +110,33 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Separate options for locations relevant to the RIT Birding Club
 	// KM value is tripled to grant a larger search radius, due to the low amount of rare sightings.
 	if messageTokens[0] == "!rare" {
+		// Adding a third message token if the user did not input an optional argument, so that the bot does not crash
+		if len(messageTokens) < 3 {
+			messageTokens = append(messageTokens, "")
+		}
+
 		switch messageTokens[1] {
 		case "rit":
-			_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(RIT, KM*3))
+			switch messageTokens[2] {
+			case "reversed":
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(RIT, KM*3, true))
+			default:
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(RIT, KM*3, false))
+			}
 		case "braddock":
-			_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(Braddock, KM*3))
+			switch messageTokens[2] {
+			case "reversed":
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(Braddock, KM*3, true))
+			default:
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(Braddock, KM*3, false))
+			}
 		case "mendon":
-			_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(Mendon, KM*3))
+			switch messageTokens[2] {
+			case "reversed":
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(Mendon, KM*3, true))
+			default:
+				_, _ = s.ChannelMessageSend(m.ChannelID, GetRareObservations(Mendon, KM*3, false))
+			}
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error: '%s' is not a valid option for !rare", messageTokens[1]))
 		}

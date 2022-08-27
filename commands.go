@@ -57,14 +57,14 @@ func DisplayHelp() *discordgo.MessageEmbed {
 			},
 			// !get
 			{
-				Name:   "!get (RIT/Mendon/Braddock)",
-				Value:  "Returns a list of birds seen within 5km of the specified location in the past 2 weeks",
+				Name:   "!get (RIT/Mendon/Braddock) {reversed}",
+				Value:  "Returns a list of birds seen within 5km of the specified location in the past 2 weeks. Optionally, include 'reversed' to reverse the alphabetical order.",
 				Inline: false,
 			},
 			// !rare
 			{
-				Name:   "!rare (RIT/Mendon/Braddock)",
-				Value:  "Returns a list of notable bird sightings (rare, out of season, etc.) within 15km of the specified location",
+				Name:   "!rare (RIT/Mendon/Braddock) {reversed}",
+				Value:  "Returns a list of notable bird sightings (rare, out of season, etc.) within 15km of the specified location. Optionally, include 'reversed' to reverse the alphabetical order.",
 				Inline: false,
 			},
 			// !bird
@@ -79,7 +79,7 @@ func DisplayHelp() *discordgo.MessageEmbed {
 }
 
 // GetRecentObservations returns a list of nearby observations in the specified radius (km) from the specified location.
-func GetRecentObservations(loc Location, radius int) string {
+func GetRecentObservations(loc Location, radius int, reverseSort bool) string {
 	// Creating URL
 	url := fmt.Sprintf("https://api.ebird.org/v2/data/obs/geo/recent?lat=%v&lng=%v&sort=species&dist=%d", loc.lat, loc.long, radius)
 	method := "GET"
@@ -122,10 +122,16 @@ func GetRecentObservations(loc Location, radius int) string {
 		return err.Error()
 	}
 
-	// Sorting list of birds alphabetically
-	sort.Slice(b, func(i, j int) bool {
-		return b[i].ComName < b[j].ComName
-	})
+	// Sorting list of birds alphabetically, depending on whether reverseSort is true or false
+	if reverseSort {
+		sort.Slice(b, func(i, j int) bool {
+			return b[i].ComName > b[j].ComName
+		})
+	} else {
+		sort.Slice(b, func(i, j int) bool {
+			return b[i].ComName < b[j].ComName
+		})
+	}
 
 	// Formatting return string
 	rString := fmt.Sprintf("**Verified eBird sightings within %d km of %v in the past 2 weeks:**\n", radius, loc.name)
@@ -135,12 +141,15 @@ func GetRecentObservations(loc Location, radius int) string {
 		}
 	}
 
+	//Trimming return string to Discord max message length, minus 5 characters to show max length has been reached
+	rString = truncateText(rString, 1995)
+
 	return rString
 }
 
 // GetRareObservations returns a list of nearby notable observations in the specified radius (km) from the specified location.
 // A notable observation may be a rare bird or a bird out of season.
-func GetRareObservations(loc Location, radius int) string {
+func GetRareObservations(loc Location, radius int, reverseSort bool) string {
 	// Creating URL
 	url := fmt.Sprintf("https://api.ebird.org/v2/data/obs/geo/recent/notable?lat=%v&lng=%v&dist=%d&sort=species&hotspot=true", loc.lat, loc.long, radius)
 	method := "GET"
@@ -183,10 +192,8 @@ func GetRareObservations(loc Location, radius int) string {
 		return err.Error()
 	}
 
-	// Sorting list of birds alphabetically
-	sort.Slice(b, func(i, j int) bool {
-		return b[i].ComName < b[j].ComName
-	})
+	// In order to remove birds found at the same location/date, we create a map to combine these entries
+	dupeMap := make(map[string]int)
 
 	// Formatting return string
 	rString := ""
@@ -198,10 +205,43 @@ func GetRareObservations(loc Location, radius int) string {
 			if b[i].HowMany > 0 {
 				strings := strings.Split(b[i].ObsDt, " ")
 				b[i].ObsDt = strings[0] //Removing the hours/minutes from observation
-				rString += fmt.Sprintf("%v: %d [%s: %s]\n ", b[i].ComName, b[i].HowMany, b[i].LocName, b[i].ObsDt)
+
+				// Combining observations with same date and location
+				key := (b[i].ComName + "|" + b[i].LocName + "|" + b[i].ObsDt + "|")
+				if value, ok := dupeMap[key]; ok {
+					dupeMap[key] = (value + b[i].HowMany)
+				} else {
+					dupeMap[key] = b[i].HowMany
+				}
 			}
 		}
+
+		// Reformatting each line after duplicate removal and adding it to an array
+		var a []string
+		for k, v := range dupeMap {
+			t := strings.Split(k, "|")
+			a = append(a, fmt.Sprintf("%v: %d [%s: %s]\n ", t[0], v, t[1], t[2]))
+		}
+		// Sorting list of birds alphabetically, depending on whether reverseSort is true or false
+		if reverseSort {
+			sort.Slice(a, func(i, j int) bool {
+				return a[i] > a[j]
+			})
+		} else {
+			sort.Slice(a, func(i, j int) bool {
+				return a[i] < a[j]
+			})
+		}
+
+		// Adding to return string from array
+		for i := 0; i < len(a); i++ {
+			rString += a[i]
+		}
+
+		//Trimming return string to Discord max message length, minus 5 characters to show max length has been reached
+		rString = truncateText(rString, 1995)
 	}
+
 	return rString
 }
 
@@ -321,7 +361,7 @@ func DisplayBird(formattedName string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
 			Color:       16711833, // Pink
 			Title:       "Bird not found!",
-			Description: "Make sure you spelled it right and have the name properly punctuated. Also make sure you have the full name (e.g. \"American Robin\" instead of just \"Robin\").",
+			Description: "Make sure you spelled it right and have the name properly punctuated. Also make sure you have the full name (e.g. \"American Robin\" instead of just \"Robin\"). Birds outside of North America are unavailable.",
 		}
 	} else {
 		// from: https://github.com/bwmarrin/discordgo/wiki/FAQ#sending-embeds
@@ -378,4 +418,15 @@ func DisplayBird(formattedName string) *discordgo.MessageEmbed {
 		}
 	}
 
+}
+
+// truncateText trims the given string to the nearest newline character and adds an ellipse if above max length
+// from: https://stackoverflow.com/a/59955447
+func truncateText(s string, max int) string {
+	if max > len(s) {
+		return s
+	}
+	s = s[:strings.LastIndex(s[:max], "\n")]
+	s += "\n..."
+	return s
 }

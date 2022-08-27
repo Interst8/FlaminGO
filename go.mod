@@ -1,4 +1,4 @@
-module github.com/Interst8/FlaminGo
+module github.com/R1V3N/FlaminGo
 
 go 1.18
 

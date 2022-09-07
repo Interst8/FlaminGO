@@ -3,7 +3,10 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,6 +17,9 @@ import (
 var (
 	// BotID keeps track of the bot's user ID to make sure it doesn't respond to its own messages.
 	BotID string
+	// adjectives and nouns are slices used when loading and using the bird generator
+	Adjectives []string
+	Nouns      []string
 )
 
 func Start() {
@@ -50,6 +56,9 @@ func Start() {
 
 	// Prints a string to confirm that the bot has successfully started.
 	fmt.Println("Bot is running!")
+
+	//Loading bird generator arrays
+	loadGenerator("./birdgen.csv")
 }
 
 // messageHandler is called whenever a Discord message is created, and will identify if the message is a FlaminGo command.
@@ -160,4 +169,53 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, DisplayBird(formattedName))
 	}
 
+	// !generate Calls GenerateBird() command
+	// User can specify
+	if messageTokens[0] == "!generate" {
+		// Adding a second message token if the user did not input an optional argument, so that the bot does not crash
+		if len(messageTokens) < 2 {
+			messageTokens = append(messageTokens, "-1")
+		}
+		//Converting optional argument to integer
+		i, err := strconv.Atoi(messageTokens[1])
+		// Error handling
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		_, _ = s.ChannelMessageSend(m.ChannelID, GenerateBird(i))
+
+	}
+
+}
+
+//loadGenerator loads the given .csv file path into the bird generator
+func loadGenerator(file string) {
+	//Opening reader with .csv file
+	r, err := os.Open(file)
+	//Error checking
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+
+	}
+	defer r.Close()
+
+	//Creating csv reader
+	reader := csv.NewReader(r)
+
+	records, err := reader.ReadAll()
+	//Error checking
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	//Adding fields to respective arrays
+	for i := 0; i < len(records); i++ {
+		Adjectives = append(Adjectives, records[i][0])
+		if len(records[i][1]) > 0 {
+			Nouns = append(Nouns, records[i][1])
+		}
+	}
 }

@@ -10,9 +10,12 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gocolly/colly"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Defining some structures used by FlaminGo commands
@@ -71,6 +74,12 @@ func DisplayHelp() *discordgo.MessageEmbed {
 			{
 				Name:   "!bird (Full Bird Name)",
 				Value:  "Displays info for the specified bird. Uses information and names from AllAboutBirds.org.",
+				Inline: false,
+			},
+			// !generate
+			{
+				Name:   "!generate {0-3}",
+				Value:  "Randomly generates a bird name using a list of every bird species. Optionally, include 0-3 to specify the number of adjectives. Credit to Aidan Mahar for the lists and original idea!",
 				Inline: false,
 			},
 		},
@@ -418,6 +427,38 @@ func DisplayBird(formattedName string) *discordgo.MessageEmbed {
 		}
 	}
 
+}
+
+// GenerateBird returns a randomly generated bird name from adjectives and a noun. User can specify 0-3 adjectives, otherwise it is randomly chosen.
+func GenerateBird(adjectives int) string {
+	rand.Seed(time.Now().UnixNano())
+
+	if adjectives >= 4 || adjectives < 0 {
+		//Randomly generate number of adjectives
+		r := rand.Intn(100)
+		if r <= 9 {
+			adjectives = 3
+		} else if r <= 55 {
+			adjectives = 2
+		} else if r <= 99 {
+			adjectives = 1
+		} else {
+			adjectives = 0
+		}
+	}
+
+	//Generating noun
+	bird := Nouns[rand.Intn(len(Nouns))]
+
+	//Adding adjectives
+	for i := 0; i < adjectives; i++ {
+		bird = Adjectives[rand.Intn(len(Adjectives))] + " " + bird
+	}
+
+	//Capitalizing words
+	bird = cases.Title(language.Und).String(bird)
+
+	return bird
 }
 
 // truncateText trims the given string to the nearest newline character and adds an ellipse if above max length
